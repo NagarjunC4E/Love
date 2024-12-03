@@ -176,7 +176,7 @@ const Proposal = () => {
   const [error, setError] = useState('');
 
   // Secure password (change this to a unique, personal message)
-  const CORRECT_PASSWORD = 'ammu123'; // IMPORTANT: Change this to something meaningful to you both
+  const CORRECT_PASSWORD = 'ILOVEYOU_AMMU'; // IMPORTANT: Change this to something meaningful to you both
 
   const renderStars = () => {
     return [...Array(50)].map((_, index) => (
