@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import { 
   Heart as HeartIcon, 
-  Star as StarIcon, 
-  Sparkles as SparklesIcon, 
-  Gift, 
+  Star as StarIcon,  
   Lock, 
   Unlock 
 } from 'lucide-react';
@@ -25,11 +23,11 @@ const starfallAnimation = keyframes`
   100% { transform: translateY(100vh) rotate(360deg); }
 `;
 
-const heartBurstAnimation = keyframes`
-  0% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.5) rotate(180deg); }
-  100% { transform: scale(1) rotate(360deg); }
-`;
+// const heartBurstAnimation = keyframes`
+//   0% { transform: scale(1) rotate(0deg); }
+//   50% { transform: scale(1.5) rotate(180deg); }
+//   100% { transform: scale(1) rotate(360deg); }
+// `;
 
 const floatAnimation = keyframes`
   0%, 100% { transform: translateY(0); }
