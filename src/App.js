@@ -159,6 +159,9 @@ const ProposalApp = () => {
   const [error, setError] = useState('');
   const [hearts, setHearts] = useState([]);
 
+  // Unique identifier for this proposal - keep it constant
+  const PROPOSAL_ID = 'AMMU_LOVE_PROPOSAL_2024';
+  
   // Unique, personal password
   const CORRECT_PASSWORD = 'ILOVEYOU_AMMU';
 
@@ -179,16 +182,17 @@ const ProposalApp = () => {
     ));
   }, []);
 
-  // Function to check and load response
-  const checkAndLoadResponse = useCallback(() => {
+  // Function to check response across different devices
+  const checkRemoteResponse = useCallback(async () => {
     try {
-      // Check browser's localStorage first
-      const storedResponse = localStorage.getItem('proposal_response');
-      
-      if (storedResponse) {
-        const parsedResponse = JSON.parse(storedResponse);
+      // First, check if a remote response exists
+      const remoteResponseKey = `${PROPOSAL_ID}_REMOTE_RESPONSE`;
+      const remoteResponse = localStorage.getItem(remoteResponseKey);
+
+      if (remoteResponse) {
+        const parsedResponse = JSON.parse(remoteResponse);
         
-        // Validate response and set stages accordingly
+        // Validate response
         if (parsedResponse && parsedResponse.answer) {
           setResponse(parsedResponse.answer);
           setStage('responded');
@@ -208,25 +212,25 @@ const ProposalApp = () => {
               setHearts([]);
             }, 1500);
           }
+
+          return true;
         }
       }
+
+      return false;
     } catch (error) {
-      console.error('Error parsing response', error);
+      console.error('Error checking remote response', error);
+      return false;
     }
-  }, []);
+  }, [PROPOSAL_ID]);
 
-  // Check response on initial load and password unlock
-  useEffect(() => {
-    checkAndLoadResponse();
-  }, [checkAndLoadResponse]);
-
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     if (password === CORRECT_PASSWORD) {
-      // Recheck response when password is correct
-      checkAndLoadResponse();
-      
-      // If no response exists, proceed to proposal stage
-      if (!response) {
+      // Check for remote response first
+      const remoteResponseExists = await checkRemoteResponse();
+
+      // If no remote response, proceed to proposal stage
+      if (!remoteResponseExists) {
         setStage('proposal');
       }
       
@@ -240,7 +244,7 @@ const ProposalApp = () => {
     const responseData = {
       answer,
       timestamp: new Date().toISOString(),
-      deviceId: Math.random().toString(36).substr(2, 9) // Unique device identifier
+      proposalId: PROPOSAL_ID
     };
 
     // Immediate UI update
@@ -263,13 +267,10 @@ const ProposalApp = () => {
       }, 1500);
     }
 
-    // Store response and use multiple storage methods for redundancy
+    // Store response with a remote-specific key
     try {
-      // Standard localStorage
-      localStorage.setItem('proposal_response', JSON.stringify(responseData));
-      
-      // Fallback: use sessionStorage
-      sessionStorage.setItem('proposal_response', JSON.stringify(responseData));
+      const remoteResponseKey = `${PROPOSAL_ID}_REMOTE_RESPONSE`;
+      localStorage.setItem(remoteResponseKey, JSON.stringify(responseData));
       
       // Trigger storage event manually
       window.dispatchEvent(new Event('storage'));
