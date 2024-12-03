@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/NagarjunC4E/Love/static/css/main.e6c13ad2.css",
+    "main.js": "/NagarjunC4E/Love/static/js/main.a90c1f87.js",
+    "static/js/453.5ff031f0.chunk.js": "/NagarjunC4E/Love/static/js/453.5ff031f0.chunk.js",
+    "index.html": "/NagarjunC4E/Love/index.html",
+    "main.e6c13ad2.css.map": "/NagarjunC4E/Love/static/css/main.e6c13ad2.css.map",
+    "main.a90c1f87.js.map": "/NagarjunC4E/Love/static/js/main.a90c1f87.js.map",
+    "453.5ff031f0.chunk.js.map": "/NagarjunC4E/Love/static/js/453.5ff031f0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.a90c1f87.js"
+  ]
+}
