@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import {
   Heart as HeartIcon,
