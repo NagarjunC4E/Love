@@ -182,13 +182,50 @@ const ProposalApp = () => {
   // Memoized handler to prevent unnecessary re-renders
   const handleStorageChange = useCallback((e) => {
     if (e.key === 'proposal_response') {
-      const storedResponse = JSON.parse(e.newValue);
-      setResponse(storedResponse.answer);
-      setStage('responded');
+      try {
+        const storedResponse = JSON.parse(e.newValue);
+        // Check if response exists and is valid
+        if (storedResponse && ('answer' in storedResponse)) {
+          setResponse(storedResponse.answer);
+          setStage('responded');
+
+          // If response is Yes, trigger heart animations
+          if (storedResponse.answer === 'Yes') {
+            const newHearts = [...Array(20)].map(() => ({
+              id: Math.random(),
+              top: Math.random() * 100,
+              left: Math.random() * 100,
+              size: Math.random() * 50 + 20
+            }));
+            setHearts(newHearts);
+
+            // Remove hearts after animation
+            setTimeout(() => {
+              setHearts([]);
+            }, 1500);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored response', error);
+      }
     }
   }, []);
 
+  // Add check on mount to see if response already exists
   useEffect(() => {
+    const existingResponse = localStorage.getItem('proposal_response');
+    if (existingResponse) {
+      try {
+        const parsedResponse = JSON.parse(existingResponse);
+        if (parsedResponse && ('answer' in parsedResponse)) {
+          setResponse(parsedResponse.answer);
+          setStage('responded');
+        }
+      } catch (error) {
+        console.error('Error parsing existing response', error);
+      }
+    }
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [handleStorageChange]);
@@ -238,7 +275,6 @@ const ProposalApp = () => {
   };
 
   const renderContent = () => {
-    // Existing renderContent logic remains the same
     switch (stage) {
       case 'initial':
         return (
@@ -297,7 +333,7 @@ const ProposalApp = () => {
             <ResponseDisplay positive={response === 'Yes'}>
               {response === 'Yes'
                 ? "Thank you from the depths of my heart for accepting my love, my dearest Ammu. I love you more than words can ever express. You mean everything to me, and my heart belongs to you forever. 😘"
-                : "if you accept or not, you are my love forever it continues 💔"}
+                : "If you accept or not, you are my love forever it continues 💔"}
             </ResponseDisplay>
           </MagicalCard>
         );
