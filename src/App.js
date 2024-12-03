@@ -1,149 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
-import { 
-  Heart as HeartIcon, 
-  Star as StarIcon,  
-  Lock, 
-  Unlock 
+import {
+  Heart as HeartIcon,
+  Lock
 } from 'lucide-react';
 
-// Global Style for Background Font
-const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap');
-  body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    overflow: hidden;
+const dreamyFloatAnimation = keyframes`
+  0%, 100% { 
+    transform: translateY(0) rotate(0deg);
+  }
+  50% { 
+    transform: translateY(-20px) rotate(5deg);
   }
 `;
 
-// Animations
-const starfallAnimation = keyframes`
-  0% { transform: translateY(-100vh) rotate(0deg); }
-  100% { transform: translateY(100vh) rotate(360deg); }
+const celestialGlowAnimation = keyframes`
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(255,255,255,0.3), 
+                0 0 20px rgba(255,105,180,0.2);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(255,255,255,0.5), 
+                0 0 40px rgba(255,105,180,0.4);
+  }
 `;
 
-// const heartBurstAnimation = keyframes`
-//   0% { transform: scale(1) rotate(0deg); }
-//   50% { transform: scale(1.5) rotate(180deg); }
-//   100% { transform: scale(1) rotate(360deg); }
-// `;
-
-const floatAnimation = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+const etherealPulseAnimation = keyframes`
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
 `;
 
-const pulseHeart = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;700&display=swap');
+  body {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    overflow: hidden;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  }
 `;
 
-const sparkle = keyframes`
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.5); }
-  100% { opacity: 0; transform: scale(0.5); }
-`;
-
-// Styled Components
 const Container = styled.div`
   position: relative;
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(
+    135deg, 
+    rgba(106,17,203,0.9) 0%, 
+    rgba(37,117,252,0.9) 100%
+  );
   overflow: hidden;
-  color: white;
 `;
 
-const StarBackground = styled.div`
-  position: absolute;
+const StarfieldBackground = styled.div`
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse at bottom, 
+    rgba(20,20,50,1) 0%, 
+    rgba(0,0,0,1) 100%
+  );
 `;
 
-const FallingStar = styled.div`
+const CelestialParticle = styled.div`
   position: absolute;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: ${props => props.size}px;
-  top: -50px;
-  left: ${props => props.left}%;
-  animation: ${starfallAnimation} ${props => props.duration}s linear infinite;
-  animation-delay: ${props => props.delay}s;
-`;
-
-const Sparkle = styled.div`
-  position: absolute;
-  width: 10px;
-  height: 10px;
   background: white;
   border-radius: 50%;
-  opacity: 0;
-  animation: ${sparkle} 2s infinite ease-in-out;
-  top: ${(props) => props.top}%;
-  left: ${(props) => props.left}%;
+  opacity: ${props => props.opacity};
+  animation: 
+    ${dreamyFloatAnimation} ${props => props.duration}s 
+    ease-in-out infinite alternate;
 `;
 
-const AnimatedHeartContainer = styled.div`
+const MagicalCard = styled.div`
   position: relative;
-  width: 150px;
-  height: 130px;
-  background: red;
-  transform: rotate(-45deg);
-  animation: ${pulseHeart} 1.5s infinite;
-  box-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.6);
-  z-index: 10;
-  &:before,
-  &:after {
-    content: "";
-    width: 150px;
-    height: 130px;
-    background: red;
-    border-radius: 50%;
-    position: absolute;
-  }
-  &:before {
-    top: -75px;
-    left: 0;
-  }
-  &:after {
-    left: 75px;
-    top: 0;
-  }
-`;
-
-const ProposalCard = styled.div`
-  position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(15px);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
   padding: 40px;
   text-align: center;
-  z-index: 10;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-  transform: ${props => props.visible ? 'scale(1)' : 'scale(0.5)'};
+  z-index: 10;
+  box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+  animation: ${celestialGlowAnimation} 3s infinite;
+  color: white;
   opacity: ${props => props.visible ? 1 : 0};
-  transition: all 0.5s ease;
+  transform: ${props => props.visible ? 'scale(1)' : 'scale(0.9)'};
+  transition: all 0.3s ease;
 `;
 
-const Input = styled.input`
-  padding: 10px;
-  margin: 10px 0;
-  width: 100%;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  color: black;
-`;
-
-const AnimatedButton = styled.button`
+const Button = styled.button`
   background: linear-gradient(45deg, #ff6b6b, #ff4081);
   color: white;
   border: none;
@@ -151,139 +106,200 @@ const AnimatedButton = styled.button`
   border-radius: 50px;
   font-size: 18px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
   margin: 10px;
-  animation: ${floatAnimation} 2s ease-in-out infinite;
+  transition: transform 0.2s ease;
+`;
 
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-  }
+const PoetricText = styled.p`
+  font-size: 1.3em;
+  line-height: 1.6;
+  opacity: 0.9;
+  font-style: italic;
 `;
 
 const ResponseDisplay = styled.div`
   margin-top: 20px;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: ${props => props.positive ? '#4caf50' : '#f44336'};
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  animation: ${etherealPulseAnimation} 2s infinite alternate;
 `;
 
-const Proposal = () => {
+const heartPopAnimation = keyframes`
+  0% { 
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+const FloatingHeart = styled.div`
+  position: fixed;
+  color: #ff4081;
+  font-size: ${props => props.size}px;
+  top: ${props => props.top}%;
+  left: ${props => props.left}%;
+  z-index: 100;
+  animation: ${heartPopAnimation} 1s ease-out;
+  pointer-events: none;
+`;
+
+const ProposalApp = () => {
   const [stage, setStage] = useState('initial');
   const [password, setPassword] = useState('');
   const [response, setResponse] = useState(null);
   const [error, setError] = useState('');
+  const [hearts, setHearts] = useState([]);
 
-  // Secure password (change this to a unique, personal message)
-  const CORRECT_PASSWORD = 'ILOVEYOU_AMMU'; // IMPORTANT: Change this to something meaningful to you both
+  // Unique, personal password
+  const CORRECT_PASSWORD = 'ILOVEYOU_AMMU';
 
-  const renderStars = () => {
-    return [...Array(50)].map((_, index) => (
-      <FallingStar 
-        key={index}
-        left={Math.random() * 100}
-        size={Math.random() * 20 + 10}
-        duration={Math.random() * 10 + 5}
-        delay={Math.random() * 5}
-      >
-        <StarIcon />
-      </FallingStar>
-    ));
-  };
-
-  const renderSparkles = () => {
-    return [...Array(15)].map((_, i) => (
-      <Sparkle
+  // Memoized renderCelestialParticles to prevent unnecessary re-renders
+  const celestialParticles = useMemo(() => {
+    return [...Array(100)].map((_, i) => (
+      <CelestialParticle
         key={i}
-        top={Math.random() * 100}
-        left={Math.random() * 100}
+        style={{
+          top: `${Math.random() * 100}%`,
+          left: `${Math.random() * 100}%`,
+          width: `${Math.random() * 3}px`,
+          height: `${Math.random() * 3}px`
+        }}
+        opacity={Math.random()}
+        duration={Math.random() * 5 + 3}
       />
     ));
-  };
+  }, []);
+
+  // Memoized handler to prevent unnecessary re-renders
+  const handleStorageChange = useCallback((e) => {
+    if (e.key === 'proposal_response') {
+      const storedResponse = JSON.parse(e.newValue);
+      setResponse(storedResponse.answer);
+      setStage('responded');
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [handleStorageChange]);
 
   const handlePasswordSubmit = () => {
     if (password === CORRECT_PASSWORD) {
       setStage('proposal');
       setError('');
     } else {
-      setError('Incorrect password. Only my love knows the secret.');
+      setError('Only true love knows the secret...');
     }
   };
 
   const handleProposalResponse = (answer) => {
-    setResponse(answer);
-    setStage('responded');
-
-    // Save proposal to localStorage
-    const newProposal = {
-      id: Date.now(),
+    const responseData = {
       answer,
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toISOString()
     };
 
-    const savedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
-    const updatedProposals = [...savedProposals, newProposal];
-    localStorage.setItem('proposals', JSON.stringify(updatedProposals));
+    // Immediate UI update
+    setResponse(answer);
+
+    // Add heart animations if answer is Yes
+    if (answer === 'Yes') {
+      const newHearts = [...Array(20)].map(() => ({
+        id: Math.random(),
+        top: Math.random() * 100,
+        left: Math.random() * 100,
+        size: Math.random() * 50 + 20
+      }));
+      setHearts(newHearts);
+
+      // Remove hearts after animation
+      setTimeout(() => {
+        setHearts([]);
+        setStage('responded');
+      }, 1500);
+    } else {
+      setStage('responded');
+    }
+
+    // Async storage update to prevent blocking
+    setTimeout(() => {
+      localStorage.setItem('proposal_response', JSON.stringify(responseData));
+      window.dispatchEvent(new Event('storage'));
+    }, 0);
   };
 
   const renderContent = () => {
-    switch(stage) {
+    // Existing renderContent logic remains the same
+    switch (stage) {
       case 'initial':
         return (
-          <ProposalCard visible={true}>
-            <AnimatedHeartContainer />
-            <h1>A Magical Moment Awaits...</h1>
-            <p>Enter our special password to unlock the proposal</p>
-            <Input 
-              type="password" 
-              placeholder="Enter password"
+          <MagicalCard visible={true}>
+            <h1>A Moment of Eternal Connection</h1>
+            <PoetricText>
+              Where words fail, love speaks. Enter our secret passage...
+            </PoetricText>
+            <input
+              type="password"
+              placeholder="Enter secret password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              style={{
+                padding: '10px',
+                margin: '15px 0',
+                width: '100%',
+                borderRadius: '10px',
+                border: '2px solid rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white'
+              }}
             />
-            <AnimatedButton onClick={handlePasswordSubmit}>
-              <Lock /> Unlock
-            </AnimatedButton>
-            {error && <p style={{color: 'red'}}>{error}</p>}
-          </ProposalCard>
+            <Button onClick={handlePasswordSubmit}>
+              <Lock /> Unlock Love
+            </Button>
+            {error && <p style={{ color: '#ff4081', marginTop: '10px' }}>{error}</p>}
+          </MagicalCard>
         );
 
       case 'proposal':
         return (
-          <ProposalCard visible={true}>
-            <h2>My Dearest Love</h2>
-            <p>
-              In this vast universe of infinite possibilities,
-              you are my one true constellation. 
-              Will you be the poetry to my heart's rhythm?
-            </p>
+          <MagicalCard visible={true}>
+            <h2>My Love 💖</h2>
+            <PoetricText>
+              In the vast symphony of life, you are the most beautiful melody that my heart has ever known. Every breath I take, every beat of my heart, whispers your name as if the universe itself is singing a song just for us.
+              <br />
+              With you, time stands still. In your eyes, I find my forever. So I ask you, my love, will you join your soul with mine and create a love story that transcends time and space?
+              <br />
+              Will you be mine, now and always, forevermore?
+            </PoetricText>
             <div>
-              <AnimatedButton onClick={() => handleProposalResponse('Yes')}>
-                <HeartIcon /> Yes, Forever
-              </AnimatedButton>
-              <AnimatedButton onClick={() => handleProposalResponse('No')}>
-                No
-              </AnimatedButton>
+              <Button onClick={() => handleProposalResponse('Yes')}>
+                <HeartIcon /> Yes 💖
+              </Button>
+              <Button onClick={() => handleProposalResponse('No')}>
+                No 💔
+              </Button>
             </div>
-          </ProposalCard>
+          </MagicalCard>
         );
 
       case 'responded':
         return (
-          <ProposalCard visible={true}>
+          <MagicalCard visible={true}>
             <ResponseDisplay positive={response === 'Yes'}>
-              {response === 'Yes' 
-                ? "You said YES! Our love will be legendary! 💖" 
-                : "Perhaps love's timing is yet to be perfect. 💔"}
+              {response === 'Yes'
+                ? "Thank you from the depths of my heart for accepting my love, my dearest Ammu. I love you more than words can ever express. You mean everything to me, and my heart belongs to you forever. 😘"
+                : "if you accept or not, you are my love forever it continues 💔"}
             </ResponseDisplay>
-            <AnimatedButton onClick={() => {
-              const savedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
-              console.log('Saved Proposals:', savedProposals);
-              alert(JSON.stringify(savedProposals, null, 2));
-            }}>
-              <Unlock /> View Saved Responses
-            </AnimatedButton>
-          </ProposalCard>
+          </MagicalCard>
         );
 
       default:
@@ -294,11 +310,23 @@ const Proposal = () => {
   return (
     <Container>
       <GlobalStyle />
-      <StarBackground>{renderStars()}</StarBackground>
-      {renderSparkles()}
+      <StarfieldBackground>
+        {celestialParticles}
+      </StarfieldBackground>
+      {/* Render floating hearts */}
+      {hearts.map(heart => (
+        <FloatingHeart
+          key={heart.id}
+          top={heart.top}
+          left={heart.left}
+          size={heart.size}
+        >
+          ❤️❤️❤️
+        </FloatingHeart>
+      ))}
       {renderContent()}
     </Container>
   );
 };
 
-export default Proposal;
+export default ProposalApp;
