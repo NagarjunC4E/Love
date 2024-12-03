@@ -162,7 +162,7 @@ const ProposalApp = () => {
   // Unique, personal password
   const CORRECT_PASSWORD = 'ILOVEYOU_AMMU';
 
-  // Memoized renderCelestialParticles to prevent unnecessary re-renders
+  // Memoized celestial particles (previous implementation)
   const celestialParticles = useMemo(() => {
     return [...Array(100)].map((_, i) => (
       <CelestialParticle
@@ -179,18 +179,22 @@ const ProposalApp = () => {
     ));
   }, []);
 
-  // Memoized handler to prevent unnecessary re-renders
-  const handleStorageChange = useCallback((e) => {
-    if (e.key === 'proposal_response') {
-      try {
-        const storedResponse = JSON.parse(e.newValue);
-        // Check if response exists and is valid
-        if (storedResponse && ('answer' in storedResponse)) {
-          setResponse(storedResponse.answer);
+  // Function to check and load response
+  const checkAndLoadResponse = useCallback(() => {
+    try {
+      // Check browser's localStorage first
+      const storedResponse = localStorage.getItem('proposal_response');
+      
+      if (storedResponse) {
+        const parsedResponse = JSON.parse(storedResponse);
+        
+        // Validate response and set stages accordingly
+        if (parsedResponse && parsedResponse.answer) {
+          setResponse(parsedResponse.answer);
           setStage('responded');
 
-          // If response is Yes, trigger heart animations
-          if (storedResponse.answer === 'Yes') {
+          // Trigger heart animation for 'Yes' response
+          if (parsedResponse.answer === 'Yes') {
             const newHearts = [...Array(20)].map(() => ({
               id: Math.random(),
               top: Math.random() * 100,
@@ -205,34 +209,27 @@ const ProposalApp = () => {
             }, 1500);
           }
         }
-      } catch (error) {
-        console.error('Error parsing stored response', error);
       }
+    } catch (error) {
+      console.error('Error parsing response', error);
     }
   }, []);
 
-  // Add check on mount to see if response already exists
+  // Check response on initial load and password unlock
   useEffect(() => {
-    const existingResponse = localStorage.getItem('proposal_response');
-    if (existingResponse) {
-      try {
-        const parsedResponse = JSON.parse(existingResponse);
-        if (parsedResponse && ('answer' in parsedResponse)) {
-          setResponse(parsedResponse.answer);
-          setStage('responded');
-        }
-      } catch (error) {
-        console.error('Error parsing existing response', error);
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [handleStorageChange]);
+    checkAndLoadResponse();
+  }, [checkAndLoadResponse]);
 
   const handlePasswordSubmit = () => {
     if (password === CORRECT_PASSWORD) {
-      setStage('proposal');
+      // Recheck response when password is correct
+      checkAndLoadResponse();
+      
+      // If no response exists, proceed to proposal stage
+      if (!response) {
+        setStage('proposal');
+      }
+      
       setError('');
     } else {
       setError('Only true love knows the secret...');
@@ -242,11 +239,13 @@ const ProposalApp = () => {
   const handleProposalResponse = (answer) => {
     const responseData = {
       answer,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      deviceId: Math.random().toString(36).substr(2, 9) // Unique device identifier
     };
 
     // Immediate UI update
     setResponse(answer);
+    setStage('responded');
 
     // Add heart animations if answer is Yes
     if (answer === 'Yes') {
@@ -261,20 +260,40 @@ const ProposalApp = () => {
       // Remove hearts after animation
       setTimeout(() => {
         setHearts([]);
-        setStage('responded');
       }, 1500);
-    } else {
-      setStage('responded');
     }
 
-    // Async storage update to prevent blocking
-    setTimeout(() => {
+    // Store response and use multiple storage methods for redundancy
+    try {
+      // Standard localStorage
       localStorage.setItem('proposal_response', JSON.stringify(responseData));
+      
+      // Fallback: use sessionStorage
+      sessionStorage.setItem('proposal_response', JSON.stringify(responseData));
+      
+      // Trigger storage event manually
       window.dispatchEvent(new Event('storage'));
-    }, 0);
+    } catch (error) {
+      console.error('Error storing response', error);
+    }
   };
 
+  // Rest of the render methods remain the same as in previous implementation
   const renderContent = () => {
+    // If response exists, always show the responded stage
+    if (response) {
+      return (
+        <MagicalCard visible={true}>
+          <ResponseDisplay positive={response === 'Yes'}>
+            {response === 'Yes'
+              ? "Thank you from the depths of my heart for accepting my love, my dearest Ammu. I love you more than words can ever express. You mean everything to me, and my heart belongs to you forever. 😘"
+              : "If you accept or not, you are my love forever it continues 💔"}
+          </ResponseDisplay>
+        </MagicalCard>
+      );
+    }
+
+    // Original stage rendering logic
     switch (stage) {
       case 'initial':
         return (
@@ -324,17 +343,6 @@ const ProposalApp = () => {
                 No 💔
               </Button>
             </div>
-          </MagicalCard>
-        );
-
-      case 'responded':
-        return (
-          <MagicalCard visible={true}>
-            <ResponseDisplay positive={response === 'Yes'}>
-              {response === 'Yes'
-                ? "Thank you from the depths of my heart for accepting my love, my dearest Ammu. I love you more than words can ever express. You mean everything to me, and my heart belongs to you forever. 😘"
-                : "If you accept or not, you are my love forever it continues 💔"}
-            </ResponseDisplay>
           </MagicalCard>
         );
 
