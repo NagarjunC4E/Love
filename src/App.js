@@ -401,7 +401,7 @@ const ProposalWebsite = () => {
     const [sorryAccepted, setSorryAccepted] = useState(null);
     const [biriyaniRideAnswer, setBiriyaniRideAnswer] = useState(null);
 
-    const CORRECT_PASSWORD = 'loveyou2024';
+    const CORRECT_PASSWORD = 'SORRY_AMMU';
 
     const questions = [
         "What was the moment you first realized you loved me?",
